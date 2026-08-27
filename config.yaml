@@ -1,0 +1,237 @@
+# ============================================================
+#  CipherForge 主配置文件
+#  所有数值均可热修改；程序启动时校验，非法值回退到内置安全默认。
+#  注意：本文件永不存放密钥、口令或 Pepper。
+# ============================================================
+
+meta:
+  app_name: CipherForge
+  version: "1.0.0"
+  config_schema: 1
+
+# ------------------------------------------------------------
+#  运行环境自适应
+#  默认针对 32GB RAM 调优，并在 8GB ~ 128GB 之间自动伸缩。
+# ------------------------------------------------------------
+environment:
+  # 目标基准内存（GB）。实际内存由程序探测，此值仅作为"标定点"。
+  reference_ram_gb: 32
+  min_ram_gb: 8
+  max_ram_gb: 128
+  # KDF 允许占用的物理内存比例上限（0.01 ~ 0.50）
+  kdf_memory_budget_ratio: 0.06
+  # 允许的最大并行工作线程数；null = 自动 (CPU 逻辑核心数 - 1)
+  max_workers: null
+
+# ------------------------------------------------------------
+#  安全加固
+# ------------------------------------------------------------
+security:
+  # 抗侧信道：为敏感比较/派生注入随机噪声延迟
+  side_channel:
+    enabled: true
+    # 随机延迟区间（毫秒）。过大将影响交互流畅度。
+    jitter_min_ms: 0.05
+    jitter_max_ms: 0.60
+    # 时间抖动仅在"验证失败"路径生效之外，也对成功路径生效，
+    # 以保证成功/失败耗时分布一致（关闭会引入可测量时序差异）
+    uniform_both_paths: true
+
+  memory:
+    # 释放前用随机数据覆写再清零（比单纯清零更稳健）
+    overwrite_before_zero: true
+    # 覆写轮数（1 ~ 7）
+    overwrite_passes: 3
+    # 敏感对象销毁后强制 gc.collect()
+    force_gc: true
+    # 尝试锁定内存页防止换出（需要权限，失败仅告警）
+    try_mlock: true
+
+  hardening:
+    # 检测调试器 / 追踪器，命中即立刻退出（发布版建议 true）
+    anti_debug: false
+    # 全局时间抖动（对外可观测的操作入口）
+    timing_jitter: true
+    # 严禁将敏感数据写入日志（强烈建议保持 true）
+    forbid_sensitive_logging: true
+
+# ------------------------------------------------------------
+#  对称加密
+# ------------------------------------------------------------
+symmetric:
+  default_algorithm: AES-256-GCM
+  # 可选：AES-256-GCM | ChaCha20-Poly1305 | XChaCha20-Poly1305
+  #       Serpent-GCM | Twofish-GCM
+  nonce_bytes: 12          # GCM / Poly1305 标准 Nonce 长度
+  xnonce_bytes: 24         # XChaCha20 扩展 Nonce
+  salt_bytes: 16           # 每次加密全新随机盐
+  tag_bytes: 16
+
+  streaming:
+    # 大文件流式分块：每块独立 Nonce + 独立认证标签
+    chunk_size_mib: 4
+    # 依据物理内存自动放大分块（32GB 环境约 8MiB）
+    auto_scale_chunk: true
+    max_chunk_size_mib: 64
+    # 单文件最大处理体积上限（GiB），防御异常输入
+    max_file_size_gib: 64
+
+# ------------------------------------------------------------
+#  密钥派生
+# ------------------------------------------------------------
+kdf:
+  default: argon2id        # argon2id | pbkdf2
+  auto_tune: true          # 启动基准测试自适应调参
+  target_ms: 400           # 目标单次派生耗时
+  benchmark_budget_ms: 500 # 基准测试自身总预算（硬上限）
+  output_length: 32
+
+  argon2id:
+    time_cost: 3           # 基准测试会覆盖
+    memory_cost_kib: 262144  # 256 MiB，基准测试会覆盖
+    parallelism: 4
+    min_memory_cost_kib: 65536    # 64 MiB 下限
+    # 内存硬上限：256 MiB 已属强内存硬（抗 GPU/ASIC 暴力），
+    # 同时保证在 4GiB 以上内存的普通机器上绝不 OOM；不足 400ms 时
+    # 由 time_cost 补偿（见 kdf._tune_argon2id）。
+    max_memory_cost_kib: 262144  # 256 MiB 上限
+
+  pbkdf2:
+    hash: sha512
+    iterations: 600000     # 基准测试会覆盖
+    min_iterations: 210000 # OWASP 2023 下限
+
+# ------------------------------------------------------------
+#  哈希
+# ------------------------------------------------------------
+hashing:
+  default_algorithm: SHA3-256
+  # SHA-256 SHA-384 SHA-512 SHA3-256 SHA3-384 SHA3-512
+  # BLAKE2b BLAKE2s SHAKE128 SHAKE256
+  shake_output_bytes: 64
+  # Pepper 仅存于内存，绝不落盘；此处只控制是否启用输入框
+  pepper_enabled: true
+  # 一键验证：自动识别常见十六进制摘要长度并匹配算法
+  smart_verify: true
+
+# ------------------------------------------------------------
+#  抗量子签名
+# ------------------------------------------------------------
+pq_signature:
+  default_algorithm: ML-DSA-87
+  # ML-DSA-87 | FALCON-1024 | SLH-DSA-SHAKE-256s
+  # 签名有效期（小时）；0 = 永不过期
+  default_validity_hours: 720
+  # 允许的时钟偏移容忍（秒），防止轻微时钟不同步误报
+  clock_skew_tolerance_s: 300
+  # 时间戳被纳入签名消息，任何篡改都会导致验签失败
+  timestamp_in_signature: true
+
+# ------------------------------------------------------------
+#  Shamir 秘密共享
+# ------------------------------------------------------------
+shamir:
+  default_shares: 5        # N，范围 2 ~ 256
+  default_threshold: 3     # M，范围 2 ~ N
+  max_shares: 256
+  # 分片输出
+  emit_text: true
+  emit_qrcode: true
+  qrcode_box_size: 6
+  qrcode_border: 2
+  # 分片内嵌 CRC 校验，抄写错误可被立即发现
+  share_checksum: true
+
+# ------------------------------------------------------------
+#  LSB 图片隐写
+# ------------------------------------------------------------
+steganography:
+  default_bit_depth: 1     # 1 ~ 4
+  max_bit_depth: 4
+  compress: true           # Zlib 预压缩载荷
+  compress_level: 9
+  # 基于口令派生的伪随机嵌入路径（抗统计分析）
+  randomized_embedding: true
+  # 输出格式：JPG 为有损格式，隐写输出会强制改为 PNG 以保证可恢复
+  force_lossless_output: true
+  supported_carriers: [".png", ".bmp", ".jpg", ".jpeg"]
+
+# ------------------------------------------------------------
+#  级联加密引擎
+# ------------------------------------------------------------
+cascade:
+  # 默认层序（可在 GUI 中拖拽调整）
+  default_layers:
+    - AES-256-GCM
+    - ChaCha20-Poly1305
+    - XChaCha20-Poly1305
+  max_layers: 8
+  # 每层独立 HKDF 子密钥 / 盐 / Nonce
+  per_layer_hkdf: true
+  hkdf_hash: sha512
+  # 层间 Tag 链式绑定，防止删层降级攻击
+  tag_chaining: true
+  # 文件头整体签名（HMAC-SHA512；启用 PQ 时额外附加抗量子签名）
+  header_signature: true
+  # 解密时依据文件头自动逆向层序
+  auto_reverse: true
+
+# ------------------------------------------------------------
+#  密码生成器
+# ------------------------------------------------------------
+password_generator:
+  default_length: 24
+  min_length: 8
+  max_length: 512
+  charsets:
+    lowercase: true
+    uppercase: true
+    digits: true
+    symbols: true
+  # 排除易混淆字符 O0oIl1|
+  exclude_ambiguous: false
+  # 强制每个已启用字符集至少出现一次
+  require_each_class: true
+  passphrase:
+    default_words: 6
+    separator: "-"
+    capitalize: true
+    inject_digit: true
+
+# ------------------------------------------------------------
+#  图形界面
+# ------------------------------------------------------------
+gui:
+  mode: workshop           # minimal（极简） | workshop（工坊）
+  theme: cyber-neon        # 深色霓虹
+  window_width: 1280
+  window_height: 820
+  min_width: 1024
+  min_height: 700
+  font_family_zh: "Microsoft YaHei UI"
+  font_size: 10
+  enable_drag_drop: true
+  enable_system_notification: true
+  # 敏感输入框失焦后自动清空的秒数；0 = 不自动清空
+  autoclear_secret_seconds: 0
+
+# ------------------------------------------------------------
+#  日志与诊断
+# ------------------------------------------------------------
+logging:
+  level: INFO              # DEBUG INFO WARNING ERROR
+  to_file: true
+  directory: logs
+  max_bytes: 5242880
+  backup_count: 3
+  # 诊断报告导出目录
+  diagnostics_directory: diagnostics
+
+# ------------------------------------------------------------
+#  文件与清理
+# ------------------------------------------------------------
+paths:
+  output_directory: output
+  temp_directory: .cfg_tmp
+  # 任何失败路径都会安全擦除并删除临时文件
+  wipe_temp_on_failure: true

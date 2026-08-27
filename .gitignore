@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Coverage
+.coverage
+.coverage.*
+cf_cov*.dat
+cov_final_*
+coverage_report/
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Server logs
+*.log
+uvicorn.log
+
+# Local config overrides (if any secrets are added later)
+.env
+.env.local
+*.local
+
+# Test artifacts
+*.png
+*.jpeg
+*.jpg
+tiny.png
+
+# Build artifacts
+*.spec
+*.bat
+build/
+dist/
+
+# WorkBuddy memory (contains local dev notes)
+.workbuddy/

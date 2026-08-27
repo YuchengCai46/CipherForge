@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cipherforge"
+version = "1.0.0"
+description = "CipherForge — 桌面级密码学工具包（对称加密 / 抗量子签名 / 高阶哈希 / KDF / 秘密共享 / 隐写 / 级联加密 / 高熵密码）"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "CipherForge Project" }]
+keywords = ["cryptography", "encryption", "post-quantum", "shamir", "steganography"]
+dependencies = [
+    "cryptography>=42.0.0",
+    "pycryptodome>=3.20.0",
+    "argon2-cffi>=23.1.0",
+    "pynacl>=1.5.0",
+    "PyYAML>=6.0.1",
+    "Pillow>=10.2.0",
+    "qrcode>=7.4.2",
+    "ttkbootstrap>=1.10.1",
+]
+
+[project.optional-dependencies]
+pq = ["liboqs-python>=0.10.0"]
+twofish = ["twofish>=0.3.0"]
+dev = ["pytest>=8.0.0", "pytest-cov>=4.1.0"]
+build = ["pyinstaller>=6.3.0", "nuitka>=2.0"]
+
+[project.scripts]
+cipherforge = "cli:run_cli"
+
+[tool.setuptools]
+packages = ["cipherforge", "cipherforge.core", "cipherforge.crypto"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+source = ["cipherforge"]
+branch = true
+omit = ["tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\. # 占位",
+]

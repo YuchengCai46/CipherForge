@@ -1,0 +1,43 @@
+# ============================================================
+#  CipherForge 依赖清单
+#  安装：pip install -r requirements.txt
+# ============================================================
+
+# ---------- 核心密码学（必需） ----------
+cryptography>=42.0.0        # AES-GCM / ChaCha20-Poly1305 / HKDF / PBKDF2（OpenSSL 后端，恒定时间）
+pycryptodome>=3.20.0        # 额外分组模式与 KAT 交叉验证
+argon2-cffi>=23.1.0         # Argon2id 密钥派生（默认 KDF）
+pynacl>=1.5.0               # libsodium 绑定：提供经审计的 XChaCha20-Poly1305（RFC 8439 官方实现、C 语言、恒定时间）
+
+# ---------- 数据与配置 ----------
+PyYAML>=6.0.1               # config.yaml 解析
+
+# ---------- 图像 / 隐写 / 二维码 ----------
+Pillow>=10.2.0              # LSB 隐写载体读写（PNG/BMP/JPG）
+qrcode>=7.4.2               # Shamir 分片二维码输出
+
+# ---------- 图形界面 ----------
+ttkbootstrap>=1.10.1        # 深色霓虹主题（Tkinter 增强）
+
+# ---------- 测试 ----------
+pytest>=8.0.0
+pytest-cov>=4.1.0
+
+# ============================================================
+#  可选增强依赖：缺失时对应功能自动降级并给出中文提示，
+#  不影响其余模块运行。请按需手动安装。
+# ============================================================
+
+# 抗量子签名 ML-DSA-87 / FALCON-1024 / SLH-DSA
+#   需先编译安装 liboqs，再安装 Python 绑定：
+#   pip install liboqs-python
+# liboqs-python>=0.10.0
+
+# Serpent / Twofish 纯 Python 分组密码实现（用于 Serpent-GCM / Twofish-GCM）
+# twofish>=0.3.0
+
+# 打包
+# pyinstaller>=6.3.0
+# nuitka>=2.0
+fastapi>=0.100.0
+uvicorn>=0.25.0
