@@ -323,3 +323,43 @@ async function doPQVerify() {
         document.getElementById("pqResult").style.display = "block";
     }
 }
+
+// Shamir 分片
+async function doShamirSplit() {
+    const threshold = parseInt(document.getElementById("shamirThreshold").value);
+    const total = parseInt(document.getElementById("shamirTotal").value);
+    const secret = document.getElementById("shamirSecret").value.trim();
+    if (!secret) { showToast("请输入秘密数据", "warning"); return; }
+    if (threshold > total) { showToast("阈值不能大于总分片数", "warning"); return; }
+    try {
+        const result = await apiRequest("/api/shamir-split", { secret, threshold, total_shares: total });
+        const sharesList = document.getElementById("shamirSharesList");
+        sharesList.innerHTML = '';
+        result.shares.forEach((share, idx) => {
+            const div = document.createElement('div');
+            div.className = 'share-item';
+            div.innerHTML = `<span class="share-label">分片 ${idx + 1}</span><code class="share-code">${share}</code>`;
+            sharesList.appendChild(div);
+        });
+        document.getElementById("shamirSplitResult").style.display = "block";
+        showToast(`成功生成 ${result.total} 个分片（需 ${result.threshold} 份恢复）`, "success");
+    } catch (e) {
+        showToast(e.message, "error");
+    }
+}
+
+// Shamir 合并
+async function doShamirCombine() {
+    const sharesText = document.getElementById("shamirSharesInput").value.trim();
+    if (!sharesText) { showToast("请输入分片数据", "warning"); return; }
+    const shares = sharesText.split('\n').map(s => s.trim()).filter(s => s);
+    if (shares.length < 2) { showToast("至少需要 2 个分片", "warning"); return; }
+    try {
+        const result = await apiRequest("/api/shamir-combine", { shares });
+        document.getElementById("shamirRecovered").textContent = result.secret;
+        document.getElementById("shamirCombineResult").style.display = "block";
+        showToast("秘密恢复成功", "success");
+    } catch (e) {
+        showToast(e.message, "error");
+    }
+}

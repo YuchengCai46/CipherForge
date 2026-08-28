@@ -295,7 +295,8 @@ async def api_shamir_split(req: ShamirSplitRequest):
 async def api_shamir_combine(req: ShamirCombineRequest):
     """Shamir 合并接口。"""
     try:
-        s = ShamirSecretSharing(0, 0)
+        # 合并只需要有效实例调用 combine()，阈值和总数不影响结果
+        s = ShamirSecretSharing(2, 2)
         secret = s.combine(req.shares)
         return {"success": True, "secret": secret.decode("utf-8")}
     except Exception as exc:
