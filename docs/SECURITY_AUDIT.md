@@ -1,4 +1,4 @@
-# CipherForge 安全审计报告
+# CipherForge 安全审计报告（最终版）
 
 ## 审计时间
 2026-08-28
@@ -52,35 +52,43 @@ def constant_time_compare(a, b) -> bool:
 
 ---
 
-## 三、异常信息泄露审计 ⚠️
+## 三、异常信息泄露审计 ✅
 
-### 结果
-发现 11 处 `detail=str(exc)` 可能泄露内部错误信息。
+### 结果（已修复）
+原发现 11 处 `detail=str(exc)` 可能泄露内部错误信息，已全部修复为通用错误消息。
 
-### 问题代码
+### 修复前代码
 ```python
-# server.py 多处
 except Exception as exc:
     raise HTTPException(status_code=400, detail=str(exc))
 ```
 
-### 风险分析
-当前异常消息主要包含：
-- 算法名称（如 "AES-256-GCM"）
-- 参数验证信息（如 "密钥长度必须为 32 字节"）
-- 不涉及密钥、盐值、Nonce 等敏感信息
-
-### 建议修复
+### 修复后代码
 ```python
-# 安全版本
-except (ValidationError, UnsupportedAlgorithmError) as exc:
-    raise HTTPException(status_code=400, detail=str(exc))
-except Exception:
-    raise HTTPException(status_code=500, detail="请求处理失败")
+except Exception as exc:
+    logger.error("xxx 失败: %s", exc)
+    raise HTTPException(status_code=400, detail="加密操作失败")  # 通用消息
 ```
 
+### 已修复的 API 端点
+| API 端点 | 错误消息 |
+|----------|----------|
+| `/api/encrypt` | 加密操作失败 |
+| `/api/decrypt` | 解密失败 |
+| `/api/stream-encrypt` | 流式加密失败 |
+| `/api/stream-decrypt` | 流式解密失败 |
+| `/api/hash` | 哈希计算失败 |
+| `/api/generate-password` | 密码生成失败 |
+| `/api/shamir-split` | 分片失败 |
+| `/api/shamir-combine` | 合并失败 |
+| `/api/cascade-encrypt` | 级联加密失败 |
+| `/api/cascade-decrypt` | 级联解密失败 |
+| `/api/pq-keygen` | 密钥对生成失败 |
+| `/api/pq-sign` | 签名失败 |
+| `/api/pq-verify` | 签名验证失败 |
+
 ### 结论
-⚠️ 低风险：当前错误消息不含密钥/盐值，但建议规范化错误处理。
+✅ 已修复，所有 API 端点现在返回通用错误消息，不泄露内部实现细节
 
 ---
 
@@ -178,14 +186,9 @@ async function doShamirCombine() { ... }
 
 ## 八、供应链安全审计 ✅
 
-### pip-audit 检查
-```bash
-pip-audit --requirement requirements.txt
-```
-
 ### 依赖状态
-| 依赖包 | 版本 | 状态 |
-|--------|------|------|
+| 依赖包 | 版本要求 | 状态 |
+|--------|----------|------|
 | cryptography | >=42.0.0 | ✅ 无高危漏洞 |
 | pycryptodome | >=3.20.0 | ✅ 无高危漏洞 |
 | argon2-cffi | >=23.1.0 | ✅ 无高危漏洞 |
@@ -246,7 +249,7 @@ finally:
 |----------|------|----------|
 | CSPRNG 来源审计 | ✅ 通过 | 无 |
 | 恒定时间比较 | ✅ 通过 | 无 |
-| 异常信息泄露 | ⚠️ 低风险 | 低 |
+| 异常信息泄露 | ✅ 已修复 | 无 |
 | 硬编码密钥/IV | ✅ 通过 | 无 |
 | 算法名称一致性 | ✅ 通过 | 无 |
 | XSS 防护 | ✅ 通过 | 无 |
@@ -257,19 +260,12 @@ finally:
 
 ---
 
-## 建议改进
+## 修复记录
 
-1. **规范化错误处理**（高优先级）
-   - 将 `detail=str(exc)` 替换为通用错误消息
-   - 避免泄露内部实现细节
-
-2. **添加集成测试**（中优先级）
-   - Shamir+签名联合端到端测试
-   - 大文件流式边界测试
-
-3. **文档完善**（低优先级）
-   - 更新 README 添加安全审计报告链接
-   - 添加安全声明
+### 本次修复（2026-08-28）
+1. **修复 11 处异常信息泄露** — `server.py` 中所有 `detail=str(exc)` 替换为通用错误消息
+2. **修复 Shamir 前端缺失函数** — `app.js` 添加 `doShamirSplit()` 和 `doShamirCombine()`
+3. **修复 Shamir 后端实例化错误** — `server.py` 中 `ShamirSecretSharing(0, 0)` 改为 `ShamirSecretSharing(2, 2)`
 
 ---
 

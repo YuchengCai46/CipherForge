@@ -185,7 +185,7 @@ async def api_encrypt(req: EncryptRequest):
         }
     except Exception as exc:
         logger.error("encrypt 失败: %s", exc)
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail="加密操作失败")
 
 
 @app.post("/api/decrypt")
@@ -220,7 +220,8 @@ async def api_stream_encrypt(req: Dict[str, str]):
         blob = cipher.encrypt(data, password=password)
         return {"success": True, "ciphertext_b64": base64.b64encode(blob).decode()}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("stream-encrypt 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="流式加密失败")
 
 
 @app.post("/api/stream-decrypt")
@@ -236,7 +237,8 @@ async def api_stream_decrypt(req: Dict[str, str]):
         pt = cipher.decrypt(ciphertext, password=password)
         return {"success": True, "plaintext": pt.decode("utf-8")}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("stream-decrypt 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="流式解密失败")
 
 
 @app.post("/api/hash")
@@ -254,7 +256,8 @@ async def api_hash(req: HashRequest):
             "b64_digest": base64.b64encode(bytes.fromhex(digest)).decode(),
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("hash 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="哈希计算失败")
 
 
 @app.post("/api/generate-password")
@@ -277,7 +280,8 @@ async def api_generate_password(req: PasswordRequest):
             "strength": gen.strength_label(entropy),
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("password generation 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="密码生成失败")
 
 
 @app.post("/api/shamir-split")
@@ -288,7 +292,8 @@ async def api_shamir_split(req: ShamirSplitRequest):
         shares = s.split_to_text(req.secret.encode("utf-8"))
         return {"success": True, "threshold": req.threshold, "total": req.total, "shares": shares}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("shamir-split 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="分片失败")
 
 
 @app.post("/api/shamir-combine")
@@ -300,7 +305,8 @@ async def api_shamir_combine(req: ShamirCombineRequest):
         secret = s.combine(req.shares)
         return {"success": True, "secret": secret.decode("utf-8")}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("shamir-combine 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="合并失败")
 
 
 @app.post("/api/cascade-encrypt")
@@ -313,7 +319,7 @@ async def api_cascade_encrypt(req: CascadeRequest):
         return {"success": True, "ciphertext_b64": base64.b64encode(blob).decode()}
     except Exception as exc:
         logger.error("cascade-encrypt 失败: %s", exc)
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail="级联加密失败")
 
 
 @app.post("/api/cascade-decrypt")
@@ -326,7 +332,7 @@ async def api_cascade_decrypt(req: CascadeRequest):
         return {"success": True, "plaintext": plaintext.decode("utf-8")}
     except Exception as exc:
         logger.error("cascade-decrypt 失败: %s", exc)
-        raise HTTPException(status_code=400, detail=f"解密失败: {exc}")
+        raise HTTPException(status_code=400, detail="级联解密失败")
 
 
 @app.post("/api/pq-keygen")
@@ -342,7 +348,8 @@ async def api_pq_keygen(req: PQKeyGenRequest):
             "algorithm": req.algorithm,
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("pq-keygen 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="密钥对生成失败")
 
 
 @app.post("/api/pq-sign")
@@ -365,7 +372,8 @@ async def api_pq_sign(req: Dict[str, str]):
             "algorithm": bundle.algorithm,
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("pq-sign 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="签名失败")
 
 
 @app.post("/api/pq-verify")
@@ -390,7 +398,8 @@ async def api_pq_verify(req: Dict[str, str]):
     except SignatureInvalidError:
         return {"success": True, "valid": False}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.error("pq-verify 失败: %s", exc)
+        raise HTTPException(status_code=400, detail="签名验证失败")
 
 
 @app.get("/health")
