@@ -244,10 +244,12 @@ class SideChannelBase:
 
         无论成功还是失败都注入同分布延迟（当 ``uniform_both_paths``
         为真），确保攻击者无法通过耗时区分两种结果。
+
+        注意：延迟在比较**之后**施加，但**不论结果如何**都会执行，
+        因此成功路径和失败路径的总耗时分布相同。
         """
         ok = constant_time_compare(actual, expected)
         if self.side_channel_enabled:
-            # 关键：延迟在分支**之前**统一施加，不因结果不同而不同
             self.jitter()
         if not ok:
             raise exc
