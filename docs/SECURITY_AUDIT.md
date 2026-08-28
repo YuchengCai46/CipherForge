@@ -269,12 +269,12 @@ finally:
 ### 覆盖率结果
 | 模块 | 分支覆盖率 | 状态 |
 |------|------------|------|
-| `cipherforge/crypto/cascade.py` | 98.5% | ✅ |
-| `cipherforge/crypto/pq_signature.py` | 98.2% | ✅ |
+| `cipherforge/crypto/cascade.py` | 99% | ✅ |
+| `cipherforge/crypto/pq_signature.py` | 98% | ✅ |
 | `cipherforge/core/config.py` | 98.1% | ✅ |
 | `cipherforge/core/hardening.py` | 97.8% | ✅ |
 | `cipherforge/core/memory.py` | 97.5% | ✅ |
-| **总体** | **98.2%** | ✅ |
+| **总体** | **96%** | ✅ |
 
 ### 新增测试
 - `tests/test_cascade_pq_coverage.py`：补充级联和后量子签名分支测试

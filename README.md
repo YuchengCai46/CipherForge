@@ -142,7 +142,7 @@ python -m pytest tests/ -q
 python -m pytest --cov=cipherforge --cov-report=term-missing -q
 ```
 
-当前状态：**311 tests · 96% 语句覆盖 · 92% 分支覆盖**
+当前状态：**422 tests · 99% 语句覆盖 · 96% 分支覆盖**
 
 ---
 
