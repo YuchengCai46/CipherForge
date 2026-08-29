@@ -423,10 +423,29 @@ def run_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import socket
+
+    def get_local_ip():
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return '127.0.0.1'
+
     ap = argparse.ArgumentParser(prog="server.py", description="CipherForge Web 服务")
     ap.add_argument("--host", default=DEFAULT_HOST, help=f"监听地址 (默认 {DEFAULT_HOST})")
     ap.add_argument("--port", "-p", type=int, default=DEFAULT_PORT, help=f"端口 (默认 {DEFAULT_PORT})")
     args = ap.parse_args(argv)
+
+    # Print LAN IP when starting in LAN mode
+    if args.host == "0.0.0.0":
+        ip = get_local_ip()
+        print(f"Your LAN IP address: {ip}")
+        print(f"Access from other devices: http://{ip}:8000")
+        print()
     run_server(host=args.host, port=args.port)
     return 0
 

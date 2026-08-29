@@ -7,13 +7,13 @@ echo.
 echo Please select an option:
 echo.
 echo   [1] Start Localhost  (http://127.0.0.1:8000)
-echo   [2] Start LAN        (http://<IP>:8000)
+echo   [2] Start LAN        (will show your IP)
 echo   [3] Stop server
 echo   [q] Quit
 echo.
 set /p MODE=Select (1/2/3/q): 
-if /i "%MODE%"=="q" goto :eof
-if /i "%MODE%"=="3" (
+if /i "%%MODE%%"=="q" goto :eof
+if /i "%%MODE%%"=="3" (
     echo.
     echo Stopping CipherForge server...
     taskkill /f /im uvicorn.exe 2>nul
@@ -22,18 +22,13 @@ if /i "%MODE%"=="3" (
     pause
     goto :eof
 )
-if /i "%MODE%"=="2" (
+if /i "%%MODE%%"=="2" (
     echo.
-    echo Starting LAN mode (0.0.0.0:8000)...
-    echo Your IP address(es):
-    for /f "tokens=2 delims=:," %%a in ('ipconfig ^| findstr /i "ipv4"') do (
-        echo   %%a
-    )
-    echo.
+    echo Starting LAN mode...
     python "%~dp0server.py" --host 0.0.0.0
-) else if /i "%MODE%"=="1" (
+) else if /i "%%MODE%%"=="1" (
     echo.
-    echo Starting localhost mode (127.0.0.1:8000)...
+    echo Starting localhost mode...
     python "%~dp0server.py"
 ) else (
     echo.
