@@ -1,11 +1,6 @@
 @echo off
 title CipherForge CLI
-echo ==========================================
-echo   CipherForge CLI
-echo ==========================================
-echo.
-echo Generating a sample password...
-python "%~dp0cli.py" passgen --length 16
+"C:\Users\Administrator\AppData\Local\Programs\Python\Python313\python.exe" "%~dp0cli.py" passgen --length 16
 echo.
 echo Usage examples:
 echo   python cli.py passgen --length 12

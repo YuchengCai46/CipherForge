@@ -7,7 +7,7 @@ echo.
 echo Starting interactive CLI...
 echo Type help for available commands
 echo.
-python "%~dp0cipherforge_cli.py"
+"C:\Users\Administrator\AppData\Local\Programs\Python\Python313\python.exe" "%~dp0cipherforge_cli.py"
 if errorlevel 1 (
     echo.
     echo Error: startup failed
