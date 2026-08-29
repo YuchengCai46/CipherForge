@@ -62,8 +62,9 @@ class LayerWidget(tk.Frame):
     def __init__(self, master, text: str, on_remove, **kwargs) -> None:
         super().__init__(master, bg="#252526", **kwargs)
         self._on_remove = on_remove
-        tk.Label(self, text=text, font=("Consolas", 9), fg="#9cdcfe",
-                 bg="#252526", anchor="w").pack(side="left", padx=8)
+        self._label = tk.Label(self, text=text, font=("Consolas", 9), fg="#9cdcfe",
+                 bg="#252526", anchor="w")
+        self._label.pack(side="left", padx=8)
         tk.Button(self, text="✕", command=on_remove, bg="#dc3545", fg="#fff",
                   font=("Microsoft YaHei UI", 9), width=2).pack(side="right", padx=8)
 
@@ -675,7 +676,7 @@ class BaseApp(tk.Tk):
             self._cascade_order[src_pos], self._cascade_order[tgt_pos] = \
                 self._cascade_order[tgt_pos], self._cascade_order[src_pos]
             for i, w in enumerate(self._layer_widgets):
-                w.config(text=f"{i+1}. {SUPPORTED_SYMMETRIC[self._cascade_order[i]]}")
+                w._label.config(text=f"{i+1}. {SUPPORTED_SYMMETRIC[self._cascade_order[i]]}")
                 w.pack(before=w)
             self._layer_inner.update_idletasks()
 
