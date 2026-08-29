@@ -64,17 +64,19 @@ class LayerWidget(tk.Frame):
         self._on_remove = on_remove
         self._label = tk.Label(self, text=text, font=("Consolas", 9), fg="#9cdcfe",
                  bg="#252526", anchor="w")
-        self._label.pack(side="left", padx=8)
+        self._label.pack(side="left", fill="x", expand=True, padx=(8, 4))
+        btn_frame = tk.Frame(self, bg="#252526")
+        btn_frame.pack(side="right")
         if on_move_up:
-            tk.Button(self, text="↑", command=on_move_up,
+            tk.Button(btn_frame, text="↑", command=on_move_up,
                       bg="#007acc", fg="#fff", font=("Microsoft YaHei UI", 8), width=2
-                      ).pack(side="left", padx=2)
+                      ).pack(side="left", padx=1)
         if on_move_down:
-            tk.Button(self, text="↓", command=on_move_down,
+            tk.Button(btn_frame, text="↓", command=on_move_down,
                       bg="#007acc", fg="#fff", font=("Microsoft YaHei UI", 8), width=2
-                      ).pack(side="left", padx=2)
-        tk.Button(self, text="✕", command=on_remove, bg="#dc3545", fg="#fff",
-                  font=("Microsoft YaHei UI", 9), width=2).pack(side="right", padx=8)
+                      ).pack(side="left", padx=1)
+        tk.Button(btn_frame, text="✕", command=on_remove, bg="#dc3545", fg="#fff",
+                  font=("Microsoft YaHei UI", 9), width=2).pack(side="left", padx=1)
 
 
 class BaseApp(tk.Tk):
