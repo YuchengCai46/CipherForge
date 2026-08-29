@@ -550,7 +550,7 @@ class BaseApp(tk.Tk):
         body.pack(fill="both", expand=True, padx=16, pady=12)
         tk.Label(body, text="级联加密", font=("Microsoft YaHei UI", 13, "bold"),
                  fg="#ce9178", bg="#1e1e1e").pack(anchor="w")
-        tk.Label(body, text="从左侧列表双击添加层 · 拖拽右侧排序 · 点击✕删除",
+        tk.Label(body, text="从左侧列表双击添加层 · 拖拽右侧排序 · 点击✕删除（可重复使用同一算法）",
                  font=("Microsoft YaHei UI", 9), fg="#808080", bg="#1e1e1e",
                  anchor="w").pack(anchor="w", pady=(2, 6))
 
@@ -633,9 +633,8 @@ class BaseApp(tk.Tk):
             return
         idx = sel[0]
         algo = SUPPORTED_SYMMETRIC[idx]
-        if algo not in [SUPPORTED_SYMMETRIC[i] for i in self._cascade_order]:
-            self._cascade_order.append(idx)
-            self._refresh_layer_list()
+        self._cascade_order.append(idx)
+        self._refresh_layer_list()
 
     def _refresh_layer_list(self) -> None:
         for w in self._layer_inner.winfo_children():
@@ -857,35 +856,14 @@ def _try_boosted_app() -> bool:
     if tb is None:
         return False
     try:
-        class BoostedApp(tb.Window):
+        class BoostedApp(BaseApp):
             def __init__(self) -> None:
-                super().__init__(themename="darkly")
-                self.title("CipherForge 工具箱 v1.0")
-                self.geometry("960x640")
-                self.minsize(800, 540)
-
-                top = ttk.Frame(self)
-                top.pack(fill="x", padx=12, pady=8)
-                ttk.Label(top, text="CipherForge",
-                          font=("Microsoft YaHei UI", 16, "bold")).pack(side="left")
-                ttk.Label(top, text="  桌面密码学工具箱",
-                          font=("Microsoft YaHei UI", 9)).pack(side="left")
-
-                self.tabs = ttk.Notebook(self)
-                self.tabs.pack(fill="both", expand=True, padx=12, pady=(0, 8))
-                for name in MODULE_NAMES:
-                    f = ttk.Frame(self.tabs)
-                    self.tabs.add(f, text=name)
-                    ttk.Label(f, text=f"{name} 模块（ttkbootstrap 增强版）",
-                              font=("Microsoft YaHei UI", 11)).place(relx=0.05, rely=0.1)
-                self.tabs.select(0)
-
-                status = ttk.Frame(self, bootstyle="primary", height=24)
-                status.pack(fill="x", side="bottom")
-                ttk.Label(status, text="就绪 | CipherForge v1.0",
-                          font=("Consolas", 8)).pack(side="left", padx=8)
-                ttk.Label(status, text="安全模式",
-                          font=("Consolas", 8)).pack(side="right", padx=8)
+                super().__init__()
+                # Override to use ttkbootstrap theming if available
+                try:
+                    self.configure(bg=tb.Colors.PRIMARY)
+                except Exception:
+                    pass
 
         app = BoostedApp()
         app.mainloop()
@@ -900,7 +878,8 @@ def _try_boosted_app() -> bool:
 # ======================================================================
 def main() -> None:
     if not _try_boosted_app():
-        BaseApp.run()
+        app = BaseApp()
+        app.mainloop()
 
 
 if __name__ == "__main__":
