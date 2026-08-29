@@ -294,7 +294,17 @@ MIT License — 详见 [LICENSE](LICENSE)。
 
 CipherForge 提供基于 FastAPI 的 Web 服务，包含精美的单页应用。
 
-### 启动方式
+### 快捷启动（推荐）
+
+双击 `server.bat`，按提示选择模式：
+
+```
+[1] 本地回环  - 仅本机访问 (http://127.0.0.1:8000)
+[2] 局域网   - 同一 WiFi 下其他设备可访问
+[q] 退出
+```
+
+### 命令行启动
 
 ```bash
 # 安装依赖
@@ -303,7 +313,7 @@ pip install fastapi uvicorn
 # 启动服务
 python server.py              # 默认 http://127.0.0.1:8000
 python server.py --port 9000  # 指定端口
-python server.py --host 0.0.0.0  # 允许外部访问
+python server.py --host 0.0.0.0  # 允许局域网访问
 ```
 
 ### API 端点
