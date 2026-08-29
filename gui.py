@@ -58,13 +58,21 @@ MODULE_NAMES = [
 
 
 class LayerWidget(tk.Frame):
-    """拖拽排序的层 widget"""
-    def __init__(self, master, text: str, on_remove, **kwargs) -> None:
+    """拖拽排序的层 widget（使用上下按钮调整顺序）"""
+    def __init__(self, master, text: str, on_remove, on_move_up=None, on_move_down=None, **kwargs) -> None:
         super().__init__(master, bg="#252526", **kwargs)
         self._on_remove = on_remove
         self._label = tk.Label(self, text=text, font=("Consolas", 9), fg="#9cdcfe",
                  bg="#252526", anchor="w")
         self._label.pack(side="left", padx=8)
+        if on_move_up:
+            tk.Button(self, text="↑", command=on_move_up,
+                      bg="#007acc", fg="#fff", font=("Microsoft YaHei UI", 8), width=2
+                      ).pack(side="left", padx=2)
+        if on_move_down:
+            tk.Button(self, text="↓", command=on_move_down,
+                      bg="#007acc", fg="#fff", font=("Microsoft YaHei UI", 8), width=2
+                      ).pack(side="left", padx=2)
         tk.Button(self, text="✕", command=on_remove, bg="#dc3545", fg="#fff",
                   font=("Microsoft YaHei UI", 9), width=2).pack(side="right", padx=8)
 
@@ -551,7 +559,7 @@ class BaseApp(tk.Tk):
         body.pack(fill="both", expand=True, padx=16, pady=12)
         tk.Label(body, text="级联加密", font=("Microsoft YaHei UI", 13, "bold"),
                  fg="#ce9178", bg="#1e1e1e").pack(anchor="w")
-        tk.Label(body, text="从左侧列表双击添加层 · 拖拽右侧排序 · 点击✕删除（可重复使用同一算法）",
+        tk.Label(body, text="从左侧列表双击添加层 · 使用 ↑↓ 按钮调整顺序 · 点击✕删除（可重复使用同一算法）",
                  font=("Microsoft YaHei UI", 9), fg="#808080", bg="#1e1e1e",
                  anchor="w").pack(anchor="w", pady=(2, 6))
 
@@ -559,7 +567,6 @@ class BaseApp(tk.Tk):
         top_pane.pack(fill="both", expand=True, pady=(0, 8))
 
         self._cascade_order: list[int] = []
-        self._drag_src = None
 
         left = tk.Frame(top_pane, bg="#1e1e1e", width=200)
         left.pack(side="left", fill="y", padx=(0, 12))
@@ -637,18 +644,29 @@ class BaseApp(tk.Tk):
         self._cascade_order.append(idx)
         self._refresh_layer_list()
 
+    def _move_layer(self, pos: int, direction: int) -> None:
+        """移动层：direction=-1 上移，direction=1 下移"""
+        new_pos = pos + direction
+        if new_pos < 0 or new_pos >= len(self._cascade_order):
+            return
+        self._cascade_order[pos], self._cascade_order[new_pos] = \
+            self._cascade_order[new_pos], self._cascade_order[pos]
+        self._refresh_layer_list()
+
     def _refresh_layer_list(self) -> None:
         for w in self._layer_inner.winfo_children():
             w.destroy()
         self._layer_widgets.clear()
         for pos, idx in enumerate(self._cascade_order):
             algo = SUPPORTED_SYMMETRIC[idx]
-            wf = LayerWidget(self._layer_inner, text=f"{pos+1}. {algo}",
-                             on_remove=lambda p=pos: self._remove_layer(p))
+            wf = LayerWidget(
+                self._layer_inner,
+                text=f"{pos+1}. {algo}",
+                on_remove=lambda p=pos: self._remove_layer(p),
+                on_move_up=lambda p=pos: self._move_layer(p, -1) if pos > 0 else None,
+                on_move_down=lambda p=pos: self._move_layer(p, 1) if pos < len(self._cascade_order) - 1 else None
+            )
             wf.pack(fill="x", pady=2)
-            wf.bind("<ButtonPress-1>", self._on_layer_press)
-            wf.bind("<B1-Motion>", self._on_layer_drag)
-            wf.bind("<ButtonRelease-1>", self._on_layer_release)
             self._layer_widgets.append(wf)
         self._layer_inner.update_idletasks()
         self._on_layer_configure(None)
@@ -656,43 +674,6 @@ class BaseApp(tk.Tk):
     def _remove_layer(self, pos: int) -> None:
         self._cascade_order.pop(pos)
         self._refresh_layer_list()
-
-    def _on_layer_press(self, event) -> None:
-        widget = self._get_layer_at(event.y)
-        if widget is not None:
-            self._drag_src = widget
-            widget.lift()
-
-    def _on_layer_drag(self, event) -> None:
-        if self._drag_src is None:
-            return
-        y = event.y
-        widget = self._get_layer_at(y)
-        if widget is not None and widget != self._drag_src:
-            src_pos = self._layer_widgets.index(self._drag_src)
-            tgt_pos = self._layer_widgets.index(widget)
-            self._layer_widgets[src_pos], self._layer_widgets[tgt_pos] = \
-                self._layer_widgets[tgt_pos], self._layer_widgets[src_pos]
-            self._cascade_order[src_pos], self._cascade_order[tgt_pos] = \
-                self._cascade_order[tgt_pos], self._cascade_order[src_pos]
-            for i, w in enumerate(self._layer_widgets):
-                w._label.config(text=f"{i+1}. {SUPPORTED_SYMMETRIC[self._cascade_order[i]]}")
-                w.pack(before=w)
-            self._layer_inner.update_idletasks()
-
-    def _on_layer_release(self, event) -> None:
-        self._drag_src = None
-
-    def _get_layer_at(self, y: int):
-        for w in reversed(self._layer_widgets):
-            try:
-                yy = w.winfo_y()
-                hh = w.winfo_height()
-                if yy <= y <= yy + hh:
-                    return w
-            except tk.TclError:
-                pass
-        return None
 
     def _show_layer_pw_dialog(self) -> None:
         if not self._cascade_order:
