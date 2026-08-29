@@ -167,7 +167,7 @@ def cmd_passphrase(args: list[str]) -> None:
     try:
         pg = PasswordGenerator()
         phrase = pg.generate_passphrase(words)
-        bits = pg.passphrase_entropy(words, len(pg._WORDLIST))
+        bits = pg.passphrase_entropy(words, len(list(__import__("cipherforge.crypto.password_generator", fromlist=["_WORDLIST"])._WORDLIST)))
         print(f"\033[32m✓ 密语密码已生成\033[0m")
         print(f"  词数: {words}")
         print(f"  密语: {phrase}")
