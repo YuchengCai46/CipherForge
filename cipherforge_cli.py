@@ -294,7 +294,7 @@ def cmd_pq_verify(args: list[str]) -> None:
         print(f"\033[31m✗ 错误: {e}\033[0m")
 
 
-def cmd_help() -> None:
+def cmd_help(args: list[str] = None) -> None:
     """显示帮助"""
     print("\033[1mCipherForge 交互式 CLI v{}\033[0m".format(__version__))
     print("\n\033[36m可用命令:\033[0m")
@@ -320,7 +320,7 @@ def cmd_help() -> None:
     print()
 
 
-def cmd_exit() -> None:
+def cmd_exit(args: list[str] = None) -> None:
     """退出命令"""
     print("\033[33m再见!\033[0m")
     sys.exit(0)
