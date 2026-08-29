@@ -57,6 +57,50 @@
 
 ---
 
+## 🚀 快速部署（Windows 快捷启动）
+
+本项目提供三个一键启动脚本，放在任意目录双击即可运行，无需配置环境变量。
+
+### 下载方式
+
+1. 克隆仓库：
+```bash
+git clone https://github.com/<your-org>/cipherforge.git
+```
+2. 或从 [Releases](https://github.com/<your-org>/cipherforge/releases) 下载最新版本。
+
+### 快捷脚本说明
+
+| 脚本 | 功能 | 使用方式 |
+|------|------|----------|
+| `cipherforge.bat` | 启动**交互式 CLI** | 双击运行，输入命令回车执行 |
+| `cli.bat` | 启动**传统 CLI**（显示示例） | 双击运行后参考提示输入命令 |
+| `gui.bat` | 启动**图形界面** | 双击运行，打开可视化操作窗口 |
+
+> **注意**：脚本使用相对路径（`%~dp0`），可随意移动文件夹位置，不影响功能。
+
+### 交互 CLI 命令速查
+
+双击 `cipherforge.bat` 后，支持以下命令：
+
+```
+cipherforge> help
+cipherforge> encrypt AES-256-GCM mypassword "hello world"
+cipherforge> decrypt AES-256-GCM mypassword <密文base64>
+cipherforge> hash SHA-256 "hello"
+cipherforge> gen 24
+cipherforge> passphrase 6
+cipherforge> shamir-split 2 2 "secret"
+cipherforge> shamir-combine <分片1> <分片2>
+cipherforge> cascade "AES-256-GCM,ChaCha20-Poly1305" mypassword "hello"
+cipherforge> pq-keygen ML-DSA-87
+cipherforge> pq-sign ML-DSA-87 <私钥文件> "text"
+cipherforge> pq-verify ML-DSA-87 <公钥文件> "text" <签名文件>
+cipherforge> exit
+```
+
+---
+
 ## 安装
 
 ```bash
