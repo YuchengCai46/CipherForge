@@ -79,6 +79,7 @@ class BaseApp(tk.Tk):
         self.configure(bg="#1e1e1e")
 
         self._build_ui()
+        self.update_idletasks()
         self._center_on_screen()
 
     def _center_on_screen(self) -> None:
@@ -900,5 +901,9 @@ def _try_boosted_app() -> bool:
 def main() -> None:
     if not _try_boosted_app():
         BaseApp.run()
+
+
+if __name__ == "__main__":
+    main()
 
 
