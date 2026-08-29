@@ -107,7 +107,7 @@ class BaseApp(tk.Tk):
             frame = tk.Frame(self.tabs, bg="#1e1e1e")
             self.tabs.add(frame, text=name)
             self._pages[name] = frame
-            getattr(self, f"_build_{name.replace(' ', '_')}")(frame)
+            getattr(self, f"_build_{name.replace(' ', '_').replace('/', '_')}")(frame)
 
         self.tabs.select(0)
 
@@ -360,10 +360,10 @@ class BaseApp(tk.Tk):
         tk.Label(row1, text="类型：", font=("Microsoft YaHei UI", 9),
                  fg="#d4d4d4", bg="#1e1e1e").pack(side="left")
         self._pg_type_var = tk.StringVar(value="random")
-        ttk.Radiobutton(row1, text="随机密码", variable=self._pg_type_var,
-                        value="random", bg="#1e1e1e", fg="#d4d4d4").pack(side="left", padx=8)
-        ttk.Radiobutton(row1, text="密语（词组）", variable=self._pg_type_var,
-                        value="passphrase", bg="#1e1e1e", fg="#d4d4d4").pack(side="left", padx=8)
+        tk.Radiobutton(row1, text="随机密码", variable=self._pg_type_var,
+                        value="random").pack(side="left", padx=8)
+        tk.Radiobutton(row1, text="密语（词组）", variable=self._pg_type_var,
+                        value="passphrase").pack(side="left", padx=8)
         row2 = tk.Frame(body, bg="#1e1e1e")
         row2.pack(fill="x", pady=4)
         tk.Label(row2, text="长度/词数：", font=("Microsoft YaHei UI", 9),
@@ -374,8 +374,7 @@ class BaseApp(tk.Tk):
         row3 = tk.Frame(body, bg="#1e1e1e")
         row3.pack(fill="x", pady=4)
         self._pg_noambig_cb = tk.BooleanVar(value=True)
-        ttk.Checkbutton(row3, text="排除易混淆字符", variable=self._pg_noambig_cb,
-                        bg="#1e1e1e", fg="#d4d4d4").pack(side="left")
+        tk.Checkbutton(row3, text="排除易混淆字符", variable=self._pg_noambig_cb).pack(side="left")
         tk.Button(body, text="生成", command=self._do_generate_password,
                   bg="#4caf50", fg="#fff", font=("Microsoft YaHei UI", 10),
                   width=10).pack(pady=8)
@@ -776,6 +775,79 @@ class BaseApp(tk.Tk):
         app = BaseApp()
         app.mainloop()
 
+    def _build_抗量子签名(self, frame: tk.Frame) -> None:
+        """抗量子签名模块"""
+        body = tk.Frame(frame, bg="#1e1e1e")
+        body.pack(fill="both", expand=True, padx=16, pady=12)
+        tk.Label(body, text="抗量子签名", font=("Microsoft YaHei UI", 13, "bold"),
+                 fg="#ce9178", bg="#1e1e1e").pack(anchor="w")
+        row1 = tk.Frame(body, bg="#1e1e1e")
+        row1.pack(fill="x", pady=8)
+        tk.Label(row1, text="算法：", font=("Microsoft YaHei UI", 9),
+                 fg="#d4d4d4", bg="#1e1e1e").pack(side="left")
+        self._pq_algo_var = tk.StringVar(value="ML-DSA-87")
+        ttk.Combobox(row1, textvariable=self._pq_algo_var,
+                     values=SUPPORTED_PQ, width=15).pack(side="left", padx=8)
+        self._pq_input = scrolledtext.ScrolledText(body, width=60, height=6,
+                                                  bg="#252526", fg="#d4d4d4",
+                                                  font=("Consolas", 10))
+        self._pq_input.pack(fill="both", expand=True, pady=8)
+        btn_frame = tk.Frame(body, bg="#1e1e1e")
+        btn_frame.pack(fill="x", pady=8)
+        tk.Button(btn_frame, text="生成密钥对", command=self._do_pq_genkey,
+                  bg="#4caf50", fg="#fff", font=("Microsoft YaHei UI", 10),
+                  width=12).pack(side="left", padx=8)
+        tk.Button(btn_frame, text="签名", command=self._do_pq_sign,
+                  bg="#2196f3", fg="#fff", font=("Microsoft YaHei UI", 10),
+                  width=10).pack(side="left", padx=8)
+        tk.Button(btn_frame, text="验证", command=self._do_pq_verify,
+                  bg="#ff9800", fg="#fff", font=("Microsoft YaHei UI", 10),
+                  width=10).pack(side="left", padx=8)
+        tk.Label(body, text="输出：", font=("Microsoft YaHei UI", 9),
+                 fg="#d4d4d4", bg="#1e1e1e").pack(anchor="w", pady=(8, 0))
+        self._pq_output = scrolledtext.ScrolledText(body, width=60, height=6,
+                                                   bg="#252526", fg="#6a9955",
+                                                   font=("Consolas", 10))
+        self._pq_output.pack(fill="both", expand=True, pady=8)
+        self._pq_sk_var = tk.StringVar(value="")
+
+    def _do_pq_genkey(self) -> None:
+        try:
+            pq = PQSignatureEngine(self._pq_algo_var.get())
+            pk, sk = pq.generate_keypair()
+            self._pq_sk_var.set(base64.b64encode(sk).decode())
+            self._pq_output.delete("1.0", "end")
+            self._pq_output.insert("1.0", f"公钥长度: {len(pk)} 字节\n私钥已生成（Base64）")
+        except Exception as exc:
+            messagebox.showerror("错误", str(exc))
+
+    def _do_pq_sign(self) -> None:
+        try:
+            sk_b64 = self._pq_sk_var.get()
+            if not sk_b64:
+                messagebox.showwarning("提示", "请先生成密钥对")
+                return
+            message = self._pq_input.get("1.0", "end-1c").encode()
+            if not message:
+                messagebox.showerror("错误", "请输入要签名的内容")
+                return
+            pq = PQSignatureEngine(self._pq_algo_var.get())
+            bundle = pq.sign(base64.b64decode(sk_b64), message)
+            self._pq_output.delete("1.0", "end")
+            self._pq_output.insert("1.0", f"签名长度: {len(bundle.signature)} 字节\n算法: {bundle.algorithm}")
+        except Exception as exc:
+            messagebox.showerror("错误", str(exc))
+
+    def _do_pq_verify(self) -> None:
+        try:
+            msg = self._pq_input.get("1.0", "end-1c").encode()
+            if not msg:
+                messagebox.showerror("错误", "请输入要验证的内容")
+                return
+            messagebox.showinfo("提示", "请在完整版本中使用签名包进行验证")
+        except Exception as exc:
+            messagebox.showerror("错误", str(exc))
+
 
 # ======================================================================
 #  ttkbootstrap 增强版（可选，仅在已安装时启用）
@@ -830,78 +902,3 @@ def main() -> None:
         BaseApp.run()
 
 
-if __name__ == "__main__":
-    main()
-
-    def _build_抗量子签名(self, frame: tk.Frame) -> None:
-        """抗量子签名模块"""
-        body = tk.Frame(frame, bg="#1e1e1e")
-        body.pack(fill="both", expand=True, padx=16, pady=12)
-        tk.Label(body, text="抗量子签名", font=("Microsoft YaHei UI", 13, "bold"),
-                 fg="#ce9178", bg="#1e1e1e").pack(anchor="w")
-        row1 = tk.Frame(body, bg="#1e1e1e")
-        row1.pack(fill="x", pady=8)
-        tk.Label(row1, text="算法：", font=("Microsoft YaHei UI", 9),
-                 fg="#d4d4d4", bg="#1e1e1e").pack(side="left")
-        self._pq_algo_var = tk.StringVar(value="ML-DSA-87")
-        ttk.Combobox(row1, textvariable=self._pq_algo_var,
-                     values=SUPPORTED_PQ, width=15).pack(side="left", padx=8)
-        self._pq_input = scrolledtext.ScrolledText(body, width=60, height=6,
-                                                  bg="#252526", fg="#d4d4d4",
-                                                  font=("Consolas", 10))
-        self._pq_input.pack(fill="both", expand=True, pady=8)
-        btn_frame = tk.Frame(body, bg="#1e1e1e")
-        btn_frame.pack(fill="x", pady=8)
-        tk.Button(btn_frame, text="生成密钥对", command=self._do_pq_genkey,
-                  bg="#4caf50", fg="#fff", font=("Microsoft YaHei UI", 10),
-                  width=12).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="签名", command=self._do_pq_sign,
-                  bg="#2196f3", fg="#fff", font=("Microsoft YaHei UI", 10),
-                  width=10).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="验证", command=self._do_pq_verify,
-                  bg="#ff9800", fg="#fff", font=("Microsoft YaHei UI", 10),
-                  width=10).pack(side="left", padx=8)
-        tk.Label(body, text="输出：", font=("Microsoft YaHei UI", 9),
-                 fg="#d4d4d4", bg="#1e1e1e").pack(anchor="w", pady=(8, 0))
-        self._pq_output = scrolledtext.ScrolledText(body, width=60, height=6,
-                                                   bg="#252526", fg="#6a9955",
-                                                   font=("Consolas", 10))
-        self._pq_output.pack(fill="both", expand=True, pady=8)
-        self._pq_sk_var = tk.StringVar(value="")
-    
-    def _do_pq_genkey(self) -> None:
-        try:
-            pq = PQSignatureEngine(self._pq_algo_var.get())
-            pk, sk = pq.generate_keypair()
-            self._pq_sk_var.set(base64.b64encode(sk).decode())
-            self._pq_output.delete("1.0", "end")
-            self._pq_output.insert("1.0", f"公钥长度: {len(pk)} 字节\n私钥已生成（Base64）")
-        except Exception as exc:
-            messagebox.showerror("错误", str(exc))
-    
-    def _do_pq_sign(self) -> None:
-        try:
-            sk_b64 = self._pq_sk_var.get()
-            if not sk_b64:
-                messagebox.showwarning("提示", "请先生成密钥对")
-                return
-            message = self._pq_input.get("1.0", "end-1c").encode()
-            if not message:
-                messagebox.showerror("错误", "请输入要签名的内容")
-                return
-            pq = PQSignatureEngine(self._pq_algo_var.get())
-            bundle = pq.sign(base64.b64decode(sk_b64), message)
-            self._pq_output.delete("1.0", "end")
-            self._pq_output.insert("1.0", f"签名长度: {len(bundle.signature)} 字节\n算法: {bundle.algorithm}")
-        except Exception as exc:
-            messagebox.showerror("错误", str(exc))
-    
-    def _do_pq_verify(self) -> None:
-        try:
-            msg = self._pq_input.get("1.0", "end-1c").encode()
-            if not msg:
-                messagebox.showerror("错误", "请输入要验证的内容")
-                return
-            messagebox.showinfo("提示", "请在完整版本中使用签名包进行验证")
-        except Exception as exc:
-            messagebox.showerror("错误", str(exc))
