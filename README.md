@@ -299,10 +299,13 @@ CipherForge 提供基于 FastAPI 的 Web 服务，包含精美的单页应用。
 双击 `server.bat`，按提示选择模式：
 
 ```
-[1] 本地回环  - 仅本机访问 (http://127.0.0.1:8000)
-[2] 局域网   - 同一 WiFi 下其他设备可访问
-[q] 退出
+[1] Start Localhost  - only this machine (http://127.0.0.1:8000)
+[2] Start LAN        - other devices on same WiFi (http://<IP>:8000)
+[3] Stop server
+[q] Quit
 ```
+
+选择 [2] 时会自动显示本机 IP 地址。选择 [3] 可通过 taskkill 停止正在运行的服务进程。
 
 ### 命令行启动
 
